@@ -1,20 +1,17 @@
-package sqlc
+package main
 
 import (
 	"context"
+	"freak-bank/api"
+	"freak-bank/db/sqlc"
 	"freak-bank/utils"
 	"log"
-	"os"
-	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/lib/pq"
 )
 
-var testStore Store
-
-func TestMain(m *testing.M) {
-	config, err := utils.LoadConfig("../..")
+func main() {
+	config, err := utils.LoadConfig(".")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
@@ -24,7 +21,11 @@ func TestMain(m *testing.M) {
 		log.Fatal("cannot connect to db:", err)
 	}
 
-	testStore = *NewStore(connPool)
+	store := sqlc.NewStore(connPool)
+	server := api.NewServer(store)
 
-	os.Exit(m.Run())
+	err = server.Start(config.ServerAddress)
+	if err != nil {
+		log.Fatal("cannot start server: ", err)
+	}
 }
